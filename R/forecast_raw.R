@@ -184,14 +184,48 @@ sabato <- c(
   as_tibble(rownames = "state") %>%
   rename(predict_category = value)
 
+## Alan I. Abramowitz ==========================================================
+## Unfortunately, another image
+url <- paste0(
+  "https://centerforpolitics.org/crystalball/articles/", 
+  "final-forecast-results-from-two-methods-of-predicting-the-", 
+  "2020-presidential-election/"
+)
+abramowitz <- c(
+  WA = "Solid-D", OR = "Solid-D", CA = "Solid-D", IL = "Solid-D",
+  NY = "Solid-D", VT = "Solid-D", MA = "Solid-D", RI = "Solid-D",
+  CT = "Solid-D", NJ = "Solid-D", DE = "Solid-D", DC = "Solid-D",
+  HI = "Solid-D", MD = "Solid-D", CO = "Solid-D", NM = "Solid-D", 
+  VA = "Solid-D",
+  
+  ME01 = "Solid-D", ME02 = "Solid-D", ## No specific district-level classif.
+  NE01 = "Solid-R", NE02 = "Solid-R", NE03 = "Solid-R",
+  
+  MN = "Likely-D", NH = "Likely-D", MI = "Likely-D", NV = "Likely-D", 
+  PA = "Likely-D", WI = "Likely-D", 
+  
+  AZ = "Lean-D", FL = "Lean-D", NC = "Lean-D", GA = "Lean-D",
+  
+  TX = "Lean-R", IA = "Lean-R", OH = "Lean-R", 
+  
+  AK = "Likely-R", MT = "Likely-R", KS = "Likely-R",
+  MO = "Likely-R", IN = "Likely-R", SC = "Likely-R",
+  
+  ID = "Solid-R", WY = "Solid-R", ND = "Solid-R", SD = "Solid-R",
+  OK = "Solid-R", AR = "Solid-R", LA = "Solid-R", MS = "Solid-R",
+  AL = "Solid-R", TN = "Solid-R", KY = "Solid-R", WV = "Solid-R",
+  UT = "Solid-R"
+) %>% 
+  as_tibble(rownames = "state") %>%
+  rename(predict_category = value)
+
 ## Skipping Inside Elections, NYT 3-state needle, U.S. News & World, ===========
 ## and PredictIt, despite 
 ## https://www.270towin.com/content/forecasts-in-the-2020-consensus-map
 save(
   list = c(
     "fivethirtyeight", "economist", "politico", "cnn", 
-    "cookpolitical", "sabato"
+    "cookpolitical", "sabato", "abramowitz"
   ),
   file = "data/pollster_forecasts.Rda"
 )
-
