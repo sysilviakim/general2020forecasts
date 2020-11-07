@@ -1,6 +1,7 @@
 library(tidyverse)
 library(httr)
 library(jsonlite)
+library(janitor)
 
 ## Export class predictions from Govt 656 ======================================
 class_656 <- read.csv("data/prediction-2020-no-pii.csv") %>%
@@ -17,7 +18,7 @@ class_656 <- read.csv("data/prediction-2020-no-pii.csv") %>%
       "", .x
     )
   ) %>%
-  rename_with(~ tolower(gsub("", "", .x))) %>%
+  rename_with(tolower) %>%
   rename(ne = nebraska) %>%
   mutate(
     ne = trimws(gsub("electoral votes", "", ne)),
@@ -44,9 +45,10 @@ class_656 %>%
 
 ## Compare to existing predictions and results =================================
 load("data/pollster_forecasts_tidy.Rda")
-load("data/nyt_result.Rda")
+load("data/nyt_recent.Rda")
+load("data/electoral_college.Rda")
 
-df <- nyt_result[[length(nyt_result)]] %>%
+df_compare <- nyt_recent %>%
   .$data %>%
   .$races %>%
   select_if(~ sum(!is.na(.)) > 0) %>%
@@ -54,43 +56,51 @@ df <- nyt_result[[length(nyt_result)]] %>%
     state = state_id, result, margin = leader_margin_display ## ,
     ## label = update_sentences.top_level.generatedText
   ) %>%
-  mutate(
-    candidate = ifelse(grepl("R+", margin), 0, 1)
-  ) %>%
+  mutate(candidate = ifelse(grepl("R+", margin), 0, 1)) %>%
   select(state, candidate) %>%
   t() %>%
-  as_tibble() %>%
+  as_tibble(.name_repair = "unique") %>%
   `colnames<-`(.[1, ]) %>%
   .[-1, ] %>%
   rename_all(tolower) %>%
   mutate_if(is.character, as.numeric) %>%
   mutate(name = "NYT Election Results (Tentative)") %>%
   mutate(
-    me = (1 + 0.5) / 2,  ## 2nd district undecided
+    me = (1 + 0.5) / 2, ## 2nd district undecided
     ne = (0 + 1 + 0) / 3 ## 2nd district to Biden, 1st/3rd to Trump
   ) %>%
-  bind_rows(., forecast_final) %>%
-  bind_rows(., class_656) %>%
-  select(name, everything())
+  bind_rows(
+    ., 
+    forecast_final,
+    class_656,
+    electors
+  ) %>%
+  select(name, sort(c(tolower(state.abb), "dc")), everything())
 
-vec <- df %>%
+## Final result ================================================================
+temp <- df_compare %>%
   t() %>%
-  as_tibble(rownames = "state") %>%
+  as_tibble(rownames = "state", .name_repair = "unique") %>%
   `colnames<-`(.[1, ]) %>%
   .[-1, ] %>%
-  janitor::clean_names() %>%
+  clean_names() %>%
   select(-name) %>%
+  mutate_all(as.numeric)
+
+## Unweighted with Electoral College Votes
+temp %>%
   mutate_all(
-    ~ (as.numeric(.x) -
-         (df[1, ] %>% unlist() %>% .[2:length(.)] %>% as.numeric()))^2
+    ~ (.x - temp$nyt_election_results_tentative)^2
   ) %>%
   colSums() %>%
-  .[2:length(.)] %>%
+  .[2:(length(.) - 1)] %>%
   sort(.)
-vec
 
-class_656 %>% 
-  filter(
-    az == 1 & fl == 0 & ga == 0 & mi == 1 & nc == 0 & 
-      oh == 0 & pa == 0 & tx == 0 & wi == 1
-  )
+## Weighted with Electoral College Votes
+temp %>%
+  mutate_all(
+    ~ (.x - temp$nyt_election_results_tentative)^2 * temp$electoral_college
+  ) %>%
+  colSums() %>%
+  .[2:(length(.) - 1)] %>%
+  sort(.)
