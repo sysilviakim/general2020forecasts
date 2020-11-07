@@ -6,6 +6,7 @@ Currently it downloads/stores
 * FiveThirtyEight forecast
 * The Economist forecast
 * Larry Sabato's Crystal Ball (which had to be hardcoded by hand)
+* Alan I. Abramowitz's prediction (also handcoded)
 * CNN ratings
 * Politico ratings
 * Cook Political Report ratings
