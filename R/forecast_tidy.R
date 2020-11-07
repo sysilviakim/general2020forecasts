@@ -2,6 +2,27 @@ library(tidyverse)
 load("data/pollster_forecasts.Rda")
 
 forecast_final <- list(
+  abramowitz %>%
+    mutate(
+      predict_category = case_when(
+        grepl("-D", predict_category) ~ 1,
+        grepl("-R", predict_category) ~ 0,
+        grepl("Toss", predict_category) ~ 0.5
+      )
+    ) %>%
+    bind_rows(
+      . %>% 
+        filter(!grepl("ME|NE", state)),
+      . %>% 
+        filter(grepl("ME", state)) %>%
+        summarise(predict_category = mean(predict_category)) %>%
+        mutate(state = "ME"),
+      . %>% 
+        filter(grepl("NE", state)) %>%
+        summarise(predict_category = mean(predict_category)) %>%
+        mutate(state = "NE")
+    ) %>%
+    mutate(predict_category = "Alan I. Abramowitz"),
   sabato %>%
     mutate(
       predict_category = case_when(
@@ -11,7 +32,7 @@ forecast_final <- list(
       )
     ) %>%
     t() %>% 
-    as_tibble() %>%
+    as_tibble(.name_repair = "unique") %>%
     `colnames<-`(.[1, ]) %>%
     .[-1, ] %>%
     rename_all(tolower) %>%
@@ -25,7 +46,7 @@ forecast_final <- list(
   fivethirtyeight %>%
     select(state, candidate) %>%
     t() %>% 
-    as_tibble() %>%
+    as_tibble(.name_repair = "unique") %>%
     `colnames<-`(.[1, ]) %>%
     .[-1, ] %>%
     rename_all(tolower) %>%
@@ -48,7 +69,7 @@ forecast_final <- list(
     ) %>%
     select(state = abb, candidate) %>%
     t() %>% 
-    as_tibble() %>%
+    as_tibble(.name_repair = "unique") %>%
     `colnames<-`(.[1, ]) %>%
     .[-1, ] %>%
     rename_all(tolower) %>%
@@ -65,7 +86,7 @@ forecast_final <- list(
       )
     ) %>%
     t() %>% 
-    as_tibble() %>%
+    as_tibble(.name_repair = "unique") %>%
     `colnames<-`(.[1, ]) %>%
     .[-1, ] %>%
     rename_all(tolower) %>%
@@ -80,7 +101,7 @@ forecast_final <- list(
   politico %>%
     select(state, candidate) %>%
     t() %>% 
-    as_tibble() %>%
+    as_tibble(.name_repair = "unique") %>%
     `colnames<-`(.[1, ]) %>%
     .[-1, ] %>%
     rename_all(tolower) %>%
@@ -124,7 +145,7 @@ forecast_final <- list(
       )
     ) %>%
     t() %>% 
-    as_tibble() %>%
+    as_tibble(.name_repair = "unique") %>%
     `colnames<-`(.[1, ]) %>%
     .[-1, ] %>%
     rename_all(tolower) %>%
