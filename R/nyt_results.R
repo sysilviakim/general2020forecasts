@@ -17,8 +17,10 @@ while (substr(snap_time, 1, 8) != "20220101") {
     snap_time <- format(Sys.time(), "%Y%m%d%H%M%S")
     nyt_result[[snap_time]] <- 
       fromJSON(content(GET(url), as = "text"), flatten = TRUE)
+    nyt_recent <- nyt_result[[length(nyt_result)]]
     
     save(nyt_result, file = "data/nyt_result.Rda")
+    save(nyt_recent, file = "data/nyt_recent.Rda")
     print(snap_time)
     Sys.sleep(295)
     
