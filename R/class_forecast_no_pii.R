@@ -87,20 +87,27 @@ temp <- df_compare %>%
   select(-name) %>%
   mutate_all(as.numeric)
 
-## Unweighted with Electoral College Votes
-temp %>%
-  mutate_all(
-    ~ (.x - temp$nyt_election_results_tentative)^2
+## Unweighted and Weighted with Electoral College Votes
+df_compare <- df_compare %>%
+  mutate(
+    unweighted = temp %>%
+      mutate_all(
+        ~ (.x - temp$nyt_election_results_tentative)^2
+      ) %>%
+      colSums(),
+    weighted = temp %>%
+      mutate_all(
+        ~ (.x - temp$nyt_election_results_tentative)^2 * temp$electoral_college
+      ) %>%
+      colSums()
   ) %>%
-  colSums() %>%
-  .[2:(length(.) - 1)] %>%
-  sort(.)
+  mutate(
+    unweighted = ifelse(grepl("NYT|Electoral", name), NA, unweighted),
+    weighted = ifelse(grepl("NYT|Electoral", name), NA, weighted)
+  ) %>%
+  select(name, weighted, unweighted, everything())
 
-## Weighted with Electoral College Votes
-temp %>%
-  mutate_all(
-    ~ (.x - temp$nyt_election_results_tentative)^2 * temp$electoral_college
-  ) %>%
-  colSums() %>%
-  .[2:(length(.) - 1)] %>%
-  sort(.)
+## Dig into specifics ==========================================================
+df_compare %>% 
+  filter(name != "Electoral College") %>%
+  .[, -caret::nearZeroVar(., freqCut = 99/1)]
